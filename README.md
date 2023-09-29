@@ -3,7 +3,7 @@
 
 
 ## Audio Transcription and Normalization (bulk_transcription.py)
-This Python script provides functionality to transcribe audio files in .m4a format to text using the Google Speech Recognition API in bulk. It also includes a step to normalize the audio files to -1.0dB before converting them to .wav format.
+This Python script provides functionality to transcribe audio files in .m4a format to text using the Google Speech Recognition API in bulk. It also includes a step to normalize the audio files to -1.0dB before converting them to .wav format. 
 
 ### Requirements
 The following libraries are required to run the script:
@@ -11,6 +11,7 @@ The following libraries are required to run the script:
 - speech_recognition
 - pydub
 - tqdm
+
 You can install these libraries using pip:
 
 `pip install SpeechRecognition pydub tqdm`
