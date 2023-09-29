@@ -4,6 +4,12 @@ from pydub import AudioSegment
 from tqdm import tqdm
 
 
+def normalize_audio(file_path):
+    audio = AudioSegment.from_file(file_path)
+    normalized_audio = audio.normalize(headroom=-1.0)
+    return normalized_audio
+
+
 def transcribe_m4a_to_text(file_path):
     r = sr.Recognizer()
     with sr.AudioFile(file_path) as source:
@@ -16,7 +22,8 @@ def bulk_transcribe_m4a_to_text(directory_path):
         if file_name.endswith(".m4a"):
             file_path = os.path.join(directory_path, file_name)
             wav_file_path = os.path.splitext(file_path)[0] + ".wav"
-            AudioSegment.from_file(file_path).export(wav_file_path, format="wav")
+            normalized_audio = normalize_audio(file_path)
+            normalized_audio.export(wav_file_path, format="wav")
             transcription = transcribe_m4a_to_text(wav_file_path)
             txt_file_path = os.path.splitext(file_path)[0] + ".txt"
             # Create a folder based on the file category
