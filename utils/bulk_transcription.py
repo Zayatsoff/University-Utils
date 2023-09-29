@@ -19,6 +19,14 @@ def bulk_transcribe_m4a_to_text(directory_path):
             AudioSegment.from_file(file_path).export(wav_file_path, format="wav")
             transcription = transcribe_m4a_to_text(wav_file_path)
             txt_file_path = os.path.splitext(file_path)[0] + ".txt"
+            # Create a folder based on the file category
+            category_folder = os.path.join(
+                directory_path, "categorized", file_name.split("_")[0]
+            )
+            os.makedirs(category_folder, exist_ok=True)
+            txt_file_path = os.path.join(
+                category_folder, os.path.basename(txt_file_path)
+            )
             with open(txt_file_path, "w") as txt_file:
                 txt_file.write(transcription)
 
