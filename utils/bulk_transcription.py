@@ -22,7 +22,17 @@ def bulk_transcribe_m4a_to_text(directory_path):
             with open(txt_file_path, "w") as txt_file:
                 txt_file.write(transcription)
 
+def combine_txt_files(directory_path):
+    combined_file_path = os.path.join(directory_path, "combined.txt")
+    with open(combined_file_path, "w") as combined_file:
+        for file_name in os.listdir(directory_path):
+            if file_name.endswith(".txt"):
+                file_path = os.path.join(directory_path, file_name)
+                with open(file_path, "r") as txt_file:
+                    combined_file.write(txt_file.read())
+                combined_file.write("\n")
 
 # Example usage
 directory_path = "/Users/liorrozin/Downloads/ppt/ppt/media/"
 bulk_transcribe_m4a_to_text(directory_path)
+combine_txt_files(directory_path)
