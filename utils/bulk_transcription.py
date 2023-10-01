@@ -14,7 +14,7 @@ def transcribe_m4a_to_text(file_path):
     r = sr.Recognizer()
     with sr.AudioFile(file_path) as source:
         audio = r.record(source)
-    return r.recognize_google(audio)
+    return r.recognize_whisper(audio)
 
 
 def bulk_transcribe_m4a_to_text(directory_path):
