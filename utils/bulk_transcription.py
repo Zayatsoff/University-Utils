@@ -38,23 +38,30 @@ def bulk_transcribe_m4a_to_text(directory_path):
                 txt_file.write(transcription)
 
 
-import re
+def combine_txt_files(root_dir):
+    # Create a list of all .txt files in the directory tree
+    txt_files = []
+    for dirpath, dirnames, filenames in os.walk(root_dir):
+        for filename in filenames:
+            if filename.endswith(".txt"):
+                txt_files.append(os.path.join(dirpath, filename))
 
+    # Sort the list of .txt files by the number at the end of the filename
+    txt_files.sort(
+        key=lambda x: int("".join(filter(str.isdigit, os.path.splitext(x)[0][-2:])))
+    )
 
-def combine_txt_files(folder_path):
-    with open(os.path.join(folder_path, "combined.txt"), "w") as outfile:
-        for root, dirs, files in os.walk(folder_path + "/categorized"):
-            files = sorted(
-                files,
-                key=lambda x: [
-                    int(c) if c.isdigit() else c.lower() for c in re.split("(\d+)", x)
-                ],
-            )
-            for file in files:
-                if file.endswith(".txt"):
-                    with open(os.path.join(root, file), "r") as infile:
-                        outfile.write(infile.read())
-                        outfile.write("\n" + file + "\n")
+    # Combine the contents of all .txt files into one giant .txt file
+    combined_txt = ""
+    for txt_file in txt_files:
+        with open(txt_file, "r") as f:
+            title = os.path.splitext(os.path.basename(txt_file))[0]
+            combined_txt += f"\n\n --{title}-- \n\n"
+            combined_txt += f.read()
+
+    # Write the combined .txt file to disk
+    with open(os.path.join(root_dir, "combined.txt"), "w") as f:
+        f.write(combined_txt)
 
 
 # Example usage
