@@ -38,18 +38,26 @@ def bulk_transcribe_m4a_to_text(directory_path):
                 txt_file.write(transcription)
 
 
-def combine_txt_files(directory_path):
-    combined_file_path = os.path.join(directory_path, "combined.txt")
-    with open(combined_file_path, "w") as combined_file:
-        for file_name in os.listdir(directory_path):
-            if file_name.endswith(".txt"):
-                file_path = os.path.join(directory_path, file_name)
-                with open(file_path, "r") as txt_file:
-                    combined_file.write(txt_file.read())
-                combined_file.write("\n")
+import re
+
+
+def combine_txt_files(folder_path):
+    with open(os.path.join(folder_path, "combined.txt"), "w") as outfile:
+        for root, dirs, files in os.walk(folder_path + "/categorized"):
+            files = sorted(
+                files,
+                key=lambda x: [
+                    int(c) if c.isdigit() else c.lower() for c in re.split("(\d+)", x)
+                ],
+            )
+            for file in files:
+                if file.endswith(".txt"):
+                    with open(os.path.join(root, file), "r") as infile:
+                        outfile.write(infile.read())
+                        outfile.write("\n" + file + "\n")
 
 
 # Example usage
 directory_path = "/Users/liorrozin/Downloads/ppt/ppt/media/"
-bulk_transcribe_m4a_to_text(directory_path)
+# bulk_transcribe_m4a_to_text(directory_path)
 combine_txt_files(directory_path)
