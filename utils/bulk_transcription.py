@@ -36,6 +36,7 @@ def bulk_transcribe_m4a_to_text(directory_path):
             )
             with open(txt_file_path, "w") as txt_file:
                 txt_file.write(transcription)
+    print("\n--Finished transcribing files--\n")
 
 
 def combine_txt_files(root_dir):
@@ -62,9 +63,12 @@ def combine_txt_files(root_dir):
     # Write the combined .txt file to disk
     with open(os.path.join(root_dir, "combined.txt"), "w") as f:
         f.write(combined_txt)
+    print("\n--Files have been combined--\n")
 
 
 # Example usage
-directory_path = "/Users/liorrozin/Downloads/ppt/ppt/media/"
-# bulk_transcribe_m4a_to_text(directory_path)
+directory_path = (
+    "/Users/liorrozin/Downloads/PPT 2 CRCJ 1000B September 19 2023 /ppt/media"
+)
+bulk_transcribe_m4a_to_text(directory_path)
 combine_txt_files(directory_path)
