@@ -10,21 +10,21 @@ def normalize_audio(file_path):
     return normalized_audio
 
 
-def transcribe_m4a_to_text(file_path):
+def transcribe_audio_to_text(file_path):
     r = sr.Recognizer()
     with sr.AudioFile(file_path) as source:
         audio = r.record(source)
     return r.recognize_whisper(audio)
 
 
-def bulk_transcribe_m4a_to_text(directory_path):
+def bulk_transcribe_audio_to_text(directory_path):
     for file_name in tqdm(os.listdir(directory_path), desc="Transcribing", unit="file"):
-        if file_name.endswith(".m4a"):
+        if file_name.endswith(".m4a") or file_name.endswith(".mp3"):
             file_path = os.path.join(directory_path, file_name)
             wav_file_path = os.path.splitext(file_path)[0] + ".wav"
-            normalized_audio = normalize_audio(file_path)
-            normalized_audio.export(wav_file_path, format="wav")
-            transcription = transcribe_m4a_to_text(wav_file_path)
+            audio = AudioSegment.from_file(file_path)
+            audio.export(wav_file_path, format="wav")
+            transcription = transcribe_audio_to_text(wav_file_path)
             txt_file_path = os.path.splitext(file_path)[0] + ".txt"
             # Create a folder based on the file category
             category_folder = os.path.join(
@@ -68,7 +68,7 @@ def combine_txt_files(root_dir):
 
 # Example usage
 directory_path = (
-    "/Users/liorrozin/Downloads/PPT 2 CRCJ 1000B September 19 2023 /ppt/media"
+    "/Users/liorrozin/Downloads/PPT 5 PART 2 CRCJ 1000B October 10 2023/ppt/media"
 )
 bulk_transcribe_m4a_to_text(directory_path)
 combine_txt_files(directory_path)
