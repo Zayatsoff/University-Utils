@@ -67,8 +67,6 @@ def combine_txt_files(root_dir):
 
 
 # Example usage
-directory_path = (
-    "/Users/liorrozin/Downloads/PPT 5 PART 2 CRCJ 1000B October 10 2023/ppt/media"
-)
-bulk_transcribe_m4a_to_text(directory_path)
+directory_path = "/Users/username/Downloads/audios"
+bulk_transcribe_audio_to_text(directory_path)
 combine_txt_files(directory_path)
