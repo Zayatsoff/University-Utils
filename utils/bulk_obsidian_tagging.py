@@ -25,27 +25,35 @@ def add_tag_to_files(directory: AnyStr, tag: AnyStr) -> None:
                         print(f"Tag '{tag}' already exists in {file}")
                         continue
 
-                    if content.startswith(front_matter_start):
-                        end_of_front_matter = content.find(front_matter_end) + len(
-                            front_matter_end
-                        )
-                        front_matter_content = content[:end_of_front_matter]
+                    if front_matter_start in content:
+                        start_index = content.find(front_matter_start)
+                        end_index = content.find(
+                            front_matter_end, start_index + len(front_matter_start)
+                        ) + len(front_matter_end)
+                        front_matter_content = content[start_index:end_index]
+
                         if "tags:" in front_matter_content:
-                            insertion_point = front_matter_content.find("tags:") + len(
+                            tags_index = front_matter_content.find("tags:") + len(
                                 "tags:\n"
                             )
-                            updated_content = (
-                                front_matter_content[:insertion_point]
+                            updated_front_matter = (
+                                front_matter_content[:tags_index]
                                 + tag_line
-                                + front_matter_content[insertion_point:]
-                                + content[end_of_front_matter:]
+                                + front_matter_content[tags_index:]
                             )
                         else:
-                            updated_content = (
-                                front_matter_content.rstrip()
-                                + f"tags:\n{tag_line}{front_matter_end}"
-                                + content[end_of_front_matter:]
+                            updated_front_matter = (
+                                front_matter_content.rstrip("\n")
+                                + "tags:\n"
+                                + tag_line
+                                + front_matter_end
                             )
+
+                        updated_content = (
+                            content[:start_index]
+                            + updated_front_matter
+                            + content[end_index:]
+                        )
                     else:
                         updated_content = front_matter + content
 
@@ -103,4 +111,4 @@ tag = "yourtag"  # Replace with your desired tag (without the hash symbol)
 add_tag_to_files(directory_path, tag)
 
 # To remove the tag
-remove_tag_from_files(directory_path, tag)
+# remove_tag_from_files(directory_path, tag)
