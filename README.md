@@ -4,7 +4,7 @@
   - [Audio Transcription and Normalization (bulk_transcription.py)](#audio-transcription-and-normalization-bulk_transcriptionpy)
     - [Requirements](#requirements)
     - [Usage](#usage)
-  - [Markdown Tag Manager](#markdown-tag-manager)
+  - [Markdown Tag Manager (bulk_obsidian_tagging.py)](#markdown-tag-manager-bulk_obsidian_taggingpy)
     - [Features](#features)
     - [Requirements](#requirements-1)
     - [Usage](#usage-1)
@@ -38,7 +38,7 @@ You can install these libraries using pip:
 4. The transcriptions will be saved as `.txt` files in the same directory.
 5. The script will also create a combined text file named `combined.txt` that contains the contents of all the individual .txt files.
 
-## Markdown Tag Manager
+## Markdown Tag Manager (bulk_obsidian_tagging.py)
 
 A Python script to manage tags within the YAML front matter of Markdown files, specifically designed for bulk adding or removing tags in markdown files within a directory. This script is particularly useful for managing tags in Markdown files used in applications like Obsidian.
 
