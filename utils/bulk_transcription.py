@@ -18,8 +18,10 @@ def transcribe_audio_to_text(file_path):
 
 
 def bulk_transcribe_audio_to_text(directory_path):
+    found_files = False  # Flag to check if audio files are found
     for file_name in tqdm(os.listdir(directory_path), desc="Transcribing", unit="file"):
         if file_name.endswith(".m4a") or file_name.endswith(".mp3"):
+            found_files = True  # Set the flag to True if an audio file is found
             file_path = os.path.join(directory_path, file_name)
             wav_file_path = os.path.splitext(file_path)[0] + ".wav"
             audio = AudioSegment.from_file(file_path)
@@ -36,7 +38,11 @@ def bulk_transcribe_audio_to_text(directory_path):
             )
             with open(txt_file_path, "w") as txt_file:
                 txt_file.write(transcription)
-    print("\n--Finished transcribing files--\n")
+    if not found_files:
+        # No audio files were found; raise an error or print a message
+        raise ValueError(f"No audio files (.m4a, .mp3) found in {directory_path}")
+    else:
+        print("\n--Finished transcribing files--\n")
 
 
 def combine_txt_files(root_dir):
@@ -67,6 +73,6 @@ def combine_txt_files(root_dir):
 
 
 # Example usage
-directory_path = "/Users/username/Downloads/audios"
+directory_path = "/Users/username/Downloads"
 bulk_transcribe_audio_to_text(directory_path)
 combine_txt_files(directory_path)
