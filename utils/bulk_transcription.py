@@ -19,7 +19,7 @@ def transcribe_m4a_to_text(file_path):
 
 def bulk_transcribe_m4a_to_text(directory_path):
     for file_name in tqdm(os.listdir(directory_path), desc="Transcribing", unit="file"):
-        if file_name.endswith(".m4a"):
+        if file_name.endswith(".m4a") or file_name.endswith(".mp3"):
             file_path = os.path.join(directory_path, file_name)
             wav_file_path = os.path.splitext(file_path)[0] + ".wav"
             normalized_audio = normalize_audio(file_path)
@@ -65,6 +65,6 @@ def combine_txt_files(root_dir):
 
 
 # Example usage
-directory_path = "/Users/liorrozin/Downloads/ppt/ppt/media/"
-# bulk_transcribe_m4a_to_text(directory_path)
+directory_path = r"C:\Users\Orange\Downloads\test"
+bulk_transcribe_m4a_to_text(directory_path)
 combine_txt_files(directory_path)
