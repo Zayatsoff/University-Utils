@@ -74,6 +74,6 @@ def combine_txt_files(root_dir):
 
 # Example usage
 if __name__ == "__main__":
-    directory_path = "/Users/liorrozin/Downloads"
+    directory_path = "/Users/username/Downloads"
     bulk_transcribe_audio_to_text(directory_path)
     combine_txt_files(directory_path)
