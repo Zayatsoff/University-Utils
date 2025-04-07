@@ -1,23 +1,26 @@
 # Table of Contents
 
+- [Table of Contents](#table-of-contents)
 - [University Utils](#university-utils)
-  - [Audio Transcription and Normalization (bulk_transcription.py)](#audio-transcription-and-normalization-bulk_transcriptionpy)
+  - [Audio Transcription and Normalization (bulk\_transcription.py)](#audio-transcription-and-normalization-bulk_transcriptionpy)
     - [Requirements](#requirements)
     - [Usage](#usage)
-  - [Markdown Tag Manager (bulk_obsidian_tagging.py)](#markdown-tag-manager-bulk_obsidian_taggingpy)
+  - [Markdown Tag Manager (bulk\_obsidian\_tagging.py)](#markdown-tag-manager-bulk_obsidian_taggingpy)
     - [Features](#features)
     - [Requirements](#requirements-1)
     - [Usage](#usage-1)
     - [Note](#note)
 
-
 # University Utils
- A bunch of code I wrote to aid me in my university courses
+
+A bunch of code I wrote to aid me in my university courses
 
 ## Audio Transcription and Normalization (bulk_transcription.py)
+
 This Python script provides functionality to transcribe audio files in `.m4a`/`.mp3` format to text using the Google Speech Recognition API in bulk. It also includes a step to normalize the audio files to -1.0dB before converting them to .wav format. All of the transcriptions are stored in a separate folder and combined into a `combined.txt` file containing all of them sorted.
 
 ### Requirements
+
 The following is required to run the script:
 
 - Python 3.x
@@ -32,6 +35,7 @@ You can install these libraries using pip:
 `pip install SpeechRecognition pydub tqdm openai_whisper torch`
 
 ### Usage
+
 1. Place your .m4a/.mp3 audio files in the specified directory.
 2. Run the script using the command python script.py.
 3. The script will transcribe each `.m4a`/`.mp3` file to text using the Whisper API.
@@ -62,7 +66,7 @@ A Python script to manage tags within the YAML front matter of Markdown files, s
    tag = "yourtag" # Replace with your desired tag
    ```
 
- 3. Run the Script: Choose the operation you want to perform—adding or removing tags—and run the script.
+3. Run the Script: Choose the operation you want to perform—adding or removing tags—and run the script.
 
 To add a tag to all Markdown files in the specified directory:
 
@@ -73,5 +77,5 @@ To remove a tag from all Markdown files in the specified directory:
 `remove_tag_from_files(directory_path, tag)`
 
 ### Note
-This script operates directly on files in the specified directory. It's recommended to back up your Markdown files before running the script to prevent data loss.
 
+This script operates directly on files in the specified directory. It's recommended to back up your Markdown files before running the script to prevent data loss.
