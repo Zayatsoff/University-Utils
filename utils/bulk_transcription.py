@@ -1,128 +1,193 @@
-import sys
-
-print(sys.executable)
 import os
-import speech_recognition as sr
-from pydub import AudioSegment
+import sys
+import tkinter as tk
+from tkinter import filedialog, messagebox
+import subprocess
+import platform
 from tqdm import tqdm
-from datetime import timedelta
+import tempfile
+import shutil
+import mlx_whisper
 
 
-def format_timestamp(milliseconds):
-    """Convert milliseconds to SRT timestamp format: HH:MM:SS,mmm"""
-    seconds, milliseconds = divmod(milliseconds, 1000)
-    minutes, seconds = divmod(seconds, 60)
-    hours, minutes = divmod(minutes, 60)
-    return f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"
+def select_folder():
+    """Prompt user to select a folder for processing (works on both macOS and Windows)"""
+    root = tk.Tk()
+    root.withdraw()  # Hide the main window
+
+    # Make sure the dialog appears in front (important for macOS)
+    root.attributes("-topmost", True)
+
+    folder_path = filedialog.askdirectory(title="Select folder containing media files")
+    root.destroy()
+    return folder_path
 
 
-def create_subtitle_block(index, start_time, end_time, text):
-    """Create a properly formatted SRT subtitle block"""
-    return f"{index}\n{start_time} --> {end_time}\n{text}\n\n"
+def check_dependencies():
+    """Check for required dependencies"""
+    try:
+        import mlx_whisper
+        from pydub import AudioSegment
+    except ImportError as e:
+        messagebox.showerror(
+            "Missing Dependencies",
+            f"Please install required packages: {str(e)}\n\nRun: pip install mlx-whisper pydub tqdm",
+        )
+        sys.exit(1)
 
-
-def transcribe_audio_to_srt(file_path, chunk_duration=3000):  # 3 seconds per subtitle
-    r = sr.Recognizer()
-    audio = AudioSegment.from_file(file_path)
-
-    chunks = []
-    for i in range(0, len(audio), chunk_duration):
-        chunk = audio[i : i + chunk_duration]
-        chunk_path = "temp_chunk.wav"
-        chunk.export(chunk_path, format="wav")
-
-        with sr.AudioFile(chunk_path) as source:
-            audio_chunk = r.record(source)
-            try:
-                text = r.recognize_whisper(audio_chunk)
-                if text.strip():  # Only add non-empty transcriptions
-                    start_time = format_timestamp(i)
-                    end_time = format_timestamp(min(i + chunk_duration, len(audio)))
-                    chunks.append((start_time, end_time, text))
-            except sr.UnknownValueError:
-                pass
-
-        os.remove(chunk_path)
-
-    return chunks
-
-
-def bulk_transcribe_to_srt(directory_path):
-    found_files = False
-
-    for file_name in tqdm(os.listdir(directory_path), desc="Transcribing", unit="file"):
-        if file_name.endswith((".m4a", ".mp3")):
-            found_files = True
-            file_path = os.path.join(directory_path, file_name)
-
-            # Create SRT file path
-            srt_file_path = os.path.splitext(file_path)[0] + ".srt"
-
-            # Create category folder
-            category_folder = os.path.join(
-                directory_path, "categorized", file_name.split("_")[0]
+    # Check for FFmpeg (required by both pydub and for video conversion)
+    try:
+        if platform.system() == "Windows":
+            subprocess.run(
+                ["where", "ffmpeg"],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
             )
-            os.makedirs(category_folder, exist_ok=True)
-
-            # Update SRT file path to be in category folder
-            srt_file_path = os.path.join(
-                category_folder, os.path.basename(srt_file_path)
+        else:  # macOS/Linux
+            subprocess.run(
+                ["which", "ffmpeg"],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
             )
-
-            # Generate subtitles
-            subtitle_chunks = transcribe_audio_to_srt(file_path)
-
-            # Write SRT file
-            with open(srt_file_path, "w", encoding="utf-8") as srt_file:
-                for i, (start_time, end_time, text) in enumerate(subtitle_chunks, 1):
-                    srt_file.write(create_subtitle_block(i, start_time, end_time, text))
-
-    if not found_files:
-        raise ValueError(f"No audio files (.m4a, .mp3) found in {directory_path}")
-    else:
-        print("\n--Finished generating subtitles--\n")
+    except subprocess.CalledProcessError:
+        messagebox.showerror(
+            "Missing FFmpeg",
+            "FFmpeg is required but not found in PATH.\n"
+            "Please install FFmpeg and make sure it's in your system PATH.",
+        )
+        sys.exit(1)
 
 
-def combine_srt_files(root_dir):
-    srt_files = []
-    for dirpath, dirnames, filenames in os.walk(root_dir):
-        for filename in filenames:
-            if filename.endswith(".srt"):
-                srt_files.append(os.path.join(dirpath, filename))
+def convert_video_to_audio(video_path, audio_path):
+    """Convert video file (MP4/MOV) to audio file (MP3) using FFmpeg directly"""
+    try:
+        # Using FFmpeg directly is more reliable across platforms
+        command = [
+            "ffmpeg",
+            "-i",
+            video_path,
+            "-q:a",
+            "0",  # Best quality
+            "-map",
+            "a",  # Extract audio only
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            audio_path,
+        ]
 
-    srt_files.sort(
-        key=lambda x: int("".join(filter(str.isdigit, os.path.splitext(x)[0][-2:])))
-    )
+        subprocess.run(
+            command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        return True
+    except Exception as e:
+        print(f"Error converting {video_path}: {str(e)}")
+        return False
 
-    total_subtitle_count = 0
-    combined_srt = ""
 
-    for srt_file in srt_files:
-        with open(srt_file, "r", encoding="utf-8") as f:
-            content = f.read().strip()
-            if content:
-                title = os.path.splitext(os.path.basename(srt_file))[0]
-                combined_srt += f"\n{total_subtitle_count + 1}\n"
-                combined_srt += "00:00:00,000 --> 00:00:02,000\n"
-                combined_srt += f"-- {title} --\n\n"
+def transcribe_with_mlx_whisper(audio_path):
+    """Transcribe audio file using mlx-whisper with the large-v3-turbo model"""
+    try:
+        # Using the whisper-large-v3-turbo model optimized for Apple Silicon
+        result = mlx_whisper.transcribe(
+            audio_path, path_or_hf_repo="mlx-community/whisper-large-v3-turbo"
+        )
+        return result["text"]
+    except Exception as e:
+        print(f"Error transcribing {audio_path}: {str(e)}")
+        return ""
 
-                # Update subtitle numbers and add content
-                lines = content.split("\n")
-                i = 0
-                while i < len(lines):
-                    if lines[i].strip().isdigit():
-                        total_subtitle_count += 1
-                        lines[i] = str(total_subtitle_count)
-                        combined_srt += "\n".join(lines[i : i + 4])
-                    i += 1
 
-    with open(os.path.join(root_dir, "combined.srt"), "w", encoding="utf-8") as f:
-        f.write(combined_srt)
+def process_files(input_folder):
+    """Process all media files in the given folder"""
+    # Create output folder for transcripts
+    transcript_folder = os.path.join(input_folder, "transcripts")
+    os.makedirs(transcript_folder, exist_ok=True)
 
-    print("\n--SRT files have been combined--\n")
+    # Create temp folder for audio conversions - use system temp for better cross-platform support
+    temp_folder = tempfile.mkdtemp(prefix="media_transcribe_")
+
+    try:
+        # Get all files in the directory
+        files = [
+            f
+            for f in os.listdir(input_folder)
+            if os.path.isfile(os.path.join(input_folder, f)) and not f.startswith(".")
+        ]  # Skip hidden files
+
+        # Filter to only media files we can process
+        media_files = [
+            f
+            for f in files
+            if os.path.splitext(f)[1].lower() in [".mp4", ".mov", ".mp3", ".wav"]
+        ]
+
+        if not media_files:
+            print("No media files found to process.")
+            return
+
+        print("First run will download the model - this may take a few minutes...")
+
+        # Process files with progress bar
+        for file in tqdm(media_files, desc="Processing files"):
+            file_path = os.path.join(input_folder, file)
+            file_extension = os.path.splitext(file)[1].lower()
+            file_name = os.path.splitext(file)[0]
+
+            # Process based on file type
+            if file_extension in [".mp4", ".mov"]:
+                # Convert video to audio first
+                temp_audio_path = os.path.join(temp_folder, f"{file_name}.mp3")
+
+                print(f"Converting {file} to audio...")
+                if convert_video_to_audio(file_path, temp_audio_path):
+                    # Transcribe the audio
+                    print(f"Transcribing {file}...")
+                    transcript = transcribe_with_mlx_whisper(temp_audio_path)
+
+                    # Save transcript
+                    transcript_path = os.path.join(
+                        transcript_folder, f"{file_name}.txt"
+                    )
+                    with open(transcript_path, "w", encoding="utf-8") as f:
+                        f.write(transcript)
+
+                    print(f"Saved transcript for {file}")
+
+            elif file_extension in [".mp3", ".wav"]:
+                # Directly transcribe audio file
+                print(f"Transcribing {file}...")
+                transcript = transcribe_with_mlx_whisper(file_path)
+
+                # Save transcript
+                transcript_path = os.path.join(transcript_folder, f"{file_name}.txt")
+                with open(transcript_path, "w", encoding="utf-8") as f:
+                    f.write(transcript)
+
+                print(f"Saved transcript for {file}")
+
+    finally:
+        # Clean up temp files
+        if os.path.exists(temp_folder):
+            shutil.rmtree(temp_folder, ignore_errors=True)
+
+    print(f"\nTranscription complete! Transcripts saved to: {transcript_folder}")
 
 
 if __name__ == "__main__":
-    directory_path = "/Users/liorrozin/"
-    bulk_transcribe_to_srt(directory_path)
-    combine_srt_files(directory_path)
+    print(f"Media Transcription Tool (Running on {platform.system()})")
+    print("------------------------")
+
+    # Check for dependencies first
+    check_dependencies()
+
+    # Get folder from user
+    folder_path = select_folder()
+
+    if folder_path:
+        print(f"Selected folder: {folder_path}")
+        process_files(folder_path)
+    else:
+        print("No folder selected. Exiting.")
